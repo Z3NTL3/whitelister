@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os/exec"
 	"slices"
 	"time"
 
@@ -109,6 +110,7 @@ func (c *RedisClient) AddIP(ip string) {
 	}
 
 	c.Client.Set(ctx, key, serialized, 0)
+	c.Refresh()
 }
 
 func (c *RedisClient) DelIP(ip string) {
@@ -138,6 +140,17 @@ func (c *RedisClient) DelIP(ip string) {
 	}
 
 	c.Client.Set(ctx, key, serialized, 0)
+	c.Refresh()
+}
+
+func (c *RedisClient) Refresh() {
+	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := exec.Command("systemctl", "restart", "ttyd").Run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (c *RedisClient) GetList() *IPs {
